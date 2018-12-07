@@ -1,5 +1,5 @@
 {
-  "name": "ETH_Singapore_Hackathon_SC",
+  "name": "eth_singapore_hackathon_sc",
   "version": "1.0.0",
   "description": "",
   "main": "truffle-config.js",
@@ -7,9 +7,43 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:blockchain:client": "bash ./scripts/start-blockchain.sh",
+    "stop:blockchain:client": "bash ./scripts/stop-blockchain.sh",
+    "test": "npm run start:blockchain:client & sudo truffle compile --all && truffle test --network development",
+    "post-test": "npm run stop:blockchain:client",
+    "coverage": "touch allFiredEvents & sudo truffle compile --all & sudo ./node_modules/.bin/solidity-coverage",
+    "precommit": "lint-staged && solhint \"contracts/*.sol\"",
+    "prettier": "prettier --write \"**/*.{js,json,css,md}\"",
+    "eslint-check": "eslint --print-config .eslintrc.js | eslint-config-prettier-check",
+    "lint:sol": "solhint contracts/**/*.sol",
+    "lint:js": "eslint test/**/*.js"
+  },
+  "lint-staged": {
+    "**/*.{js,json,css,md}": [
+      "prettier --write --print-width 150",
+      "git add"
+    ]
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "electusaction": "^2.4.1",
+    "truffle-hdwallet-provider": "1.0.0-web3one.1"
+  },
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-config-prettier": "^3.3.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-prettier": "^3.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "lint-staged": "^8.1.0",
+    "prettier": "^1.15.2",
+    "solhint": "^1.4.0",
+    "husky": "^1.2.0"
+  }
 }
