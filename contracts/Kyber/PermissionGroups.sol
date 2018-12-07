@@ -11,7 +11,7 @@ contract PermissionGroups {
     address[] internal alertersGroup;
     uint constant internal MAX_GROUP_SIZE = 50;
 
-    constructor() public {
+    function PermissionGroups() public {
         admin = msg.sender;
     }
 

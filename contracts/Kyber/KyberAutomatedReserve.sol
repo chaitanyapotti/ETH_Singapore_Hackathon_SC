@@ -1,16 +1,16 @@
 pragma solidity ^0.4.25;
 
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "./Kyber/Utils.sol";
-import "./Kyber/ConversionRatesInterface.sol";
-import "./Kyber/SanityRatesInterface.sol";
+import "./ERC20Interface.sol";
+import "./Utils.sol";
+import "./Withdrawable.sol";
+import "./ConversionRatesInterface.sol";
+import "./SanityRatesInterface.sol";
 import "./KyberReserveInterface.sol";
-import "./Kyber/Withdrawable.sol";
 
 
 /// @title Kyber Reserve contract
-contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
+contract KyberAutomatedReserve is KyberReserveInterface, Withdrawable, Utils {
 
     address public kyberNetwork;
     bool public tradeEnabled;
@@ -19,7 +19,7 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
     mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
     mapping(address=>address) public tokenWallet;
 
-    constructor(address _kyberNetwork, ConversionRatesInterface _ratesContract, address _admin) public {
+    function KyberAutomatedReserve(address _kyberNetwork, ConversionRatesInterface _ratesContract, address _admin) public {
         require(_admin != address(0));
         require(_ratesContract != address(0));
         require(_kyberNetwork != address(0));
@@ -29,7 +29,7 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
         tradeEnabled = true;
     }
 
-    event DepositToken(ERC20Detailed token, uint amount);
+    event DepositToken(ERC20Interface token, uint amount);
 
     function() public payable {
         DepositToken(ETH_TOKEN_ADDRESS, msg.value);
@@ -45,9 +45,9 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
     );
 
     function trade(
-        ERC20Detailed srcToken,
+        ERC20Interface srcToken,
         uint srcAmount,
-        ERC20Detailed destToken,
+        ERC20Interface destToken,
         address destAddress,
         uint conversionRate,
         bool validate
@@ -80,9 +80,9 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
         return true;
     }
 
-    event WithdrawAddressApproved(ERC20Detailed token, address addr, bool approve);
+    event WithdrawAddressApproved(ERC20Interface token, address addr, bool approve);
 
-    function approveWithdrawAddress(ERC20Detailed token, address addr, bool approve) public onlyAdmin {
+    function approveWithdrawAddress(ERC20Interface token, address addr, bool approve) public onlyAdmin {
         approvedWithdrawAddresses[keccak256(token, addr)] = approve;
         WithdrawAddressApproved(token, addr, approve);
 
@@ -93,17 +93,17 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
         }
     }
 
-    event NewTokenWallet(ERC20Detailed token, address wallet);
+    event NewTokenWallet(ERC20Interface token, address wallet);
 
-    function setTokenWallet(ERC20Detailed token, address wallet) public onlyAdmin {
+    function setTokenWallet(ERC20Interface token, address wallet) public onlyAdmin {
         require(wallet != address(0x0));
         tokenWallet[token] = wallet;
         NewTokenWallet(token, wallet);
     }
 
-    event WithdrawFunds(ERC20Detailed token, uint amount, address destination);
+    event WithdrawFunds(ERC20Interface token, uint amount, address destination);
 
-    function withdraw(ERC20Detailed token, uint amount, address destination) public onlyOperator returns(bool) {
+    function withdraw(ERC20Interface token, uint amount, address destination) public onlyOperator returns(bool) {
         require(approvedWithdrawAddresses[keccak256(token, destination)]);
 
         if (token == ETH_TOKEN_ADDRESS) {
@@ -140,9 +140,9 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
     ////////////////////////////////////////////////////////////////////////////
     /// status functions ///////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    function getBalance(ERC20Detailed token) public view returns(uint) {
+    function getBalance(ERC20Interface token) public view returns(uint) {
         if (token == ETH_TOKEN_ADDRESS)
-            return address(this).balance;
+            return this.balance;
         else {
             address wallet = tokenWallet[token];
             uint balanceOfWallet = token.balanceOf(wallet);
@@ -152,22 +152,22 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
         }
     }
 
-    function getDestQty(ERC20Detailed src, ERC20Detailed dest, uint srcQty, uint rate) public view returns(uint) {
+    function getDestQty(ERC20Interface src, ERC20Interface dest, uint srcQty, uint rate) public view returns(uint) {
         uint dstDecimals = getDecimals(dest);
         uint srcDecimals = getDecimals(src);
 
         return calcDstQty(srcQty, srcDecimals, dstDecimals, rate);
     }
 
-    function getSrcQty(ERC20Detailed src, ERC20Detailed dest, uint dstQty, uint rate) public view returns(uint) {
+    function getSrcQty(ERC20Interface src, ERC20Interface dest, uint dstQty, uint rate) public view returns(uint) {
         uint dstDecimals = getDecimals(dest);
         uint srcDecimals = getDecimals(src);
 
         return calcSrcQty(dstQty, srcDecimals, dstDecimals, rate);
     }
 
-    function getConversionRate(ERC20Detailed src, ERC20Detailed dest, uint srcQty, uint blockNumber) public view returns(uint) {
-        ERC20Detailed token;
+    function getConversionRate(ERC20Interface src, ERC20Interface dest, uint srcQty, uint blockNumber) public view returns(uint) {
+        ERC20Interface token;
         bool  isBuy;
 
         if (!tradeEnabled) return 0;
@@ -203,9 +203,9 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
     /// @param validate If true, additional validations are applicable
     /// @return true iff trade is successful
     function doTrade(
-        ERC20Detailed srcToken,
+        ERC20Interface srcToken,
         uint srcAmount,
-        ERC20Detailed destToken,
+        ERC20Interface destToken,
         address destAddress,
         uint conversionRate,
         bool validate
@@ -227,7 +227,7 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
         require(destAmount > 0);
 
         // add to imbalance
-        ERC20Detailed token;
+        ERC20Interface token;
         int tradeAmount;
         if (srcToken == ETH_TOKEN_ADDRESS) {
             tradeAmount = int(destAmount);
@@ -256,7 +256,7 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
             require(destToken.transferFrom(tokenWallet[destToken], destAddress, destAmount));
         }
 
-        emit TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
+        TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
 
         return true;
     }

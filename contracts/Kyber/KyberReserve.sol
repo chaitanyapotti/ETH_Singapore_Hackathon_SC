@@ -1,26 +1,17 @@
 pragma solidity ^0.4.25;
 
-import "./Treasury.sol";
-import "./Poll/UnBoundPoll.sol";
-import "./Kyber/Utils.sol";
-import "./Kyber/Withdrawable.sol";
-import "./Kyber/ConversionRatesInterface.sol";
-import "./Kyber/SanityRatesInterface.sol";
-import "./Kyber/KyberReserveInterface.sol";
+
+import "./ERC20Interface.sol";
+import "./Utils.sol";
+import "./Withdrawable.sol";
+import "./ConversionRatesInterface.sol";
+import "./SanityRatesInterface.sol";
+import "./KyberReserveInterface.sol";
 
 
-contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
-    
-    address public killPollAddress;
-    address public tapPoll;
-    mapping(address => bool) public pollAddresses;
-    uint public killAcceptancePercent;
-    uint public tapAcceptancePercent;
-    uint public capPercent;
-    uint public splineHeightAtPivot;
-    uint public withdrawnTillNow;
+/// @title Kyber Reserve contract
+contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
 
-    //Kyber
     address public kyberNetwork;
     bool public tradeEnabled;
     ConversionRatesInterface public conversionRatesContract;
@@ -28,93 +19,20 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
     mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
     mapping(address=>address) public tokenWallet;
 
-    event RefundStarted();
-    event Withdraw(uint amountWei);
-    event TapIncreased(uint amountWei, address contractAddress);
-    event TapPollCreated(address tapPollAddress);
+    constructor(address _kyberNetwork, ConversionRatesInterface _ratesContract, address _admin) public {
+        require(_admin != address(0));
+        require(_ratesContract != address(0));
+        require(_kyberNetwork != address(0));
+        kyberNetwork = _kyberNetwork;
+        conversionRatesContract = _ratesContract;
+        admin = _admin;
+        tradeEnabled = true;
+    }
 
-    //Kyber
     event DepositToken(ERC20Interface token, uint amount);
 
-    constructor(address _erc20Token, address _teamAddress, uint _initialTap, uint _capPercent, 
-    uint _killAcceptancePercent, uint _tapAcceptancePercent, uint _tapIncrementFactor, address _pollDeployer, 
-    address _kyberNetwork, ConversionRatesInterface _ratesContract)
-        public Treasury(_erc20Token, _teamAddress, _initialTap, _tapIncrementFactor, _pollDeployer) {
-            //check for cap maybe
-            // cap is 10^2 multiplied to actual percentage - already in poll
-            require(_killAcceptancePercent <= 80, "Kill Acceptance should be less than 80 %");
-            require(_tapAcceptancePercent >= 50, "At least 50% must accept tap increment");
-            capPercent = _capPercent;
-            killAcceptancePercent = _killAcceptancePercent;
-            tapAcceptancePercent = _tapAcceptancePercent;
-            tapIncrementFactor = _tapIncrementFactor;
-            kyberNetwork = _kyberNetwork;
-            conversionRatesContract = _ratesContract;
-            tradeEnabled = true;
-        }
-    
     function() public payable {
-        emit DepositToken(ETH_TOKEN_ADDRESS, msg.value);
-    }
-
-    function createKillPoll() external {
-        require(killPollAddress == address(0), "kill poll is already deployed");
-        killPollAddress = pollDeployer.deployUnBoundPoll(address(0), "Yes", erc20Token, capPercent, 
-        "DAICO", "Kill", "Token Proportional Capped Bound", now + 1, 0, address(this));
-        pollAddresses[killPollAddress] = true;
-    }
-
-    function executeKill() external {
-        bool canKillApp = canKill();
-        require(canKillApp, "Cannot Kill Now");
-        state = TreasuryState.Killed;
-        emit RefundStarted();
-    }
-
-    function createTapIncrementPoll() external onlyOwner onlyDuringGovernance {        
-        require(tapPoll == 0, "Tap Increment poll already exists");
-        tapPoll = pollDeployer.deployUnBoundPoll(address(0), "yes", erc20Token, capPercent,
-        "DAICO", "Tap Increment Poll", "Token Proportional Capped", now + 1, 0, address(this));
-        pollAddresses[tapPoll] = true;
-        emit TapPollCreated(tapPoll);
-    }
-
-    function increaseTap() external onlyOwner onlyDuringGovernance {
-        bool canIncrease = canIncreaseTap();
-        require(canIncrease, "Can't increase tap now");
-        splineHeightAtPivot = SafeMath.add(splineHeightAtPivot, SafeMath.mul(SafeMath.sub(now, 
-            pivotTime), currentTap));
-        pivotTime = now;
-        currentTap = SafeMath.div(SafeMath.mul(tapIncrementFactor, currentTap), 100);
-        UnBoundPoll instance = UnBoundPoll(tapPoll);
-        instance.endPoll();
-        emit TapIncreased(currentTap, tapPoll);
-        tapPoll = address(0);
-    }
-
-    function onCrowdSaleR1End() external onlyCrowdSale {
-        state = TreasuryState.Governance;
-        splineHeightAtPivot = 0;
-        pivotTime = now;
-        currentTap = initialTap;
-    }
-
-    function withdrawAmount(uint _amount) external onlyOwner onlyDuringGovernance {
-        bool canKillApp =  canKill();
-        require(!canKillApp, "cannot withdraw now");
-        require(_amount < address(this).balance, "Insufficient funds");
-        splineHeightAtPivot = SafeMath.add(splineHeightAtPivot, SafeMath.mul(SafeMath.sub(now, 
-                pivotTime), currentTap));
-        require(_amount <= splineHeightAtPivot - withdrawnTillNow, "Not allowed");
-        pivotTime = now;
-        splineHeightAtPivot = SafeMath.sub(splineHeightAtPivot, _amount);
-        withdrawnTillNow += _amount;    
-        teamAddress.transfer(_amount);
-        emit Withdraw(_amount);
-    }
-
-    function isPollAddress(address _address) external view returns (bool) {
-        return pollAddresses[_address];
+        DepositToken(ETH_TOKEN_ADDRESS, msg.value);
     }
 
     event TradeExecute(
@@ -150,14 +68,51 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
 
     function enableTrade() public onlyAdmin returns(bool) {
         tradeEnabled = true;
-        emit TradeEnabled(true);
+        TradeEnabled(true);
 
         return true;
     }
 
     function disableTrade() public onlyAlerter returns(bool) {
         tradeEnabled = false;
-        emit TradeEnabled(false);
+        TradeEnabled(false);
+
+        return true;
+    }
+
+    event WithdrawAddressApproved(ERC20Interface token, address addr, bool approve);
+
+    function approveWithdrawAddress(ERC20Interface token, address addr, bool approve) public onlyAdmin {
+        approvedWithdrawAddresses[keccak256(token, addr)] = approve;
+        WithdrawAddressApproved(token, addr, approve);
+
+        setDecimals(token);
+        if ((tokenWallet[token] == address(0x0)) && (token != ETH_TOKEN_ADDRESS)) {
+            tokenWallet[token] = this; // by default
+            require(token.approve(this, 2 ** 255));
+        }
+    }
+
+    event NewTokenWallet(ERC20Interface token, address wallet);
+
+    function setTokenWallet(ERC20Interface token, address wallet) public onlyAdmin {
+        require(wallet != address(0x0));
+        tokenWallet[token] = wallet;
+        NewTokenWallet(token, wallet);
+    }
+
+    event WithdrawFunds(ERC20Interface token, uint amount, address destination);
+
+    function withdraw(ERC20Interface token, uint amount, address destination) public onlyOperator returns(bool) {
+        require(approvedWithdrawAddresses[keccak256(token, destination)]);
+
+        if (token == ETH_TOKEN_ADDRESS) {
+            destination.transfer(amount);
+        } else {
+            require(token.transferFrom(tokenWallet[token], destination, amount));
+        }
+
+        WithdrawFunds(token, amount, destination);
 
         return true;
     }
@@ -179,23 +134,12 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
         conversionRatesContract = _conversionRates;
         sanityRatesContract = _sanityRates;
 
-        emit SetContractAddresses(kyberNetwork, conversionRatesContract, sanityRatesContract);
+        SetContractAddresses(kyberNetwork, conversionRatesContract, sanityRatesContract);
     }
 
-    function canIncreaseTap() public view returns (bool) {
-        require(tapPoll != address(0), "No tap poll exists yet");
-        UnBoundPoll instance = UnBoundPoll(tapPoll);
-        uint consensus = SafeMath.div(instance.getVoteTally(0), erc20Token.totalSupply());
-        bool canKillApp = canKill();
-        return (consensus >= tapAcceptancePercent && !canKillApp);
-    }
-
-    function canKill() public view returns (bool) {
-        UnBoundPoll currentKillPoll = UnBoundPoll(killPollAddress);
-        uint consensus = SafeMath.div(currentKillPoll.getVoteTally(0), erc20Token.totalSupply());
-        return consensus >= killAcceptancePercent;
-    }
-
+    ////////////////////////////////////////////////////////////////////////////
+    /// status functions ///////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     function getBalance(ERC20Interface token) public view returns(uint) {
         if (token == ETH_TOKEN_ADDRESS)
             return this.balance;

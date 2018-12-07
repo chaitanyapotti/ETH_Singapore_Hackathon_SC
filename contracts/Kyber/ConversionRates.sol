@@ -1,11 +1,10 @@
 pragma solidity ^0.4.25;
 
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "./ERC20Interface.sol";
 import "./VolumeImbalanceRecorder.sol";
 import "./Utils.sol";
 import "./ConversionRatesInterface.sol";
-
 
 contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, Utils {
 
@@ -44,7 +43,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
         uint32 blockNumber;
     } */
     uint public validRateDurationInBlocks = 10; // rates are valid for this amount of blocks
-    ERC20Detailed[] internal listedTokens;
+    ERC20Interface[] internal listedTokens;
     mapping(address=>TokenData) internal tokenData;
     bytes32[] internal tokenRatesCompactData;
     uint public numTokensInCurrentCompactData = 0;
@@ -55,9 +54,10 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     int  constant internal MAX_BPS_ADJUSTMENT = 10 ** 11; // 1B %
     int  constant internal MIN_BPS_ADJUSTMENT = -100 * 100; // cannot go down by more than 100%
 
-    constructor(address _admin) public VolumeImbalanceRecorder(_admin) { } // solhint-disable-line no-empty-blocks
+    function ConversionRates(address _admin) public VolumeImbalanceRecorder(_admin)
+        { } // solhint-disable-line no-empty-blocks
 
-    function addToken(ERC20Detailed token) public onlyAdmin {
+    function addToken(ERC20Interface token) public onlyAdmin {
 
         require(!tokenData[token].listed);
         tokenData[token].listed = true;
@@ -93,7 +93,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
 
     function setBaseRate(
-        ERC20Detailed[] tokens,
+        ERC20Interface[] tokens,
         uint[] baseBuy,
         uint[] baseSell,
         bytes14[] buy,
@@ -119,7 +119,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
 
     function setQtyStepFunction(
-        ERC20Detailed token,
+        ERC20Interface token,
         int[] xBuy,
         int[] yBuy,
         int[] xSell,
@@ -139,7 +139,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
 
     function setImbalanceStepFunction(
-        ERC20Detailed token,
+        ERC20Interface token,
         int[] xBuy,
         int[] yBuy,
         int[] xSell,
@@ -162,13 +162,13 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
         validRateDurationInBlocks = duration;
     }
 
-    function enableTokenTrade(ERC20Detailed token) public onlyAdmin {
+    function enableTokenTrade(ERC20Interface token) public onlyAdmin {
         require(tokenData[token].listed);
         require(tokenControlInfo[token].minimalRecordResolution != 0);
         tokenData[token].enabled = true;
     }
 
-    function disableTokenTrade(ERC20Detailed token) public onlyAlerter {
+    function disableTokenTrade(ERC20Interface token) public onlyAlerter {
         require(tokenData[token].listed);
         tokenData[token].enabled = false;
     }
@@ -178,7 +178,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
 
     function recordImbalance(
-        ERC20Detailed token,
+        ERC20Interface token,
         int buyAmount,
         uint rateUpdateBlock,
         uint currentBlock
@@ -193,7 +193,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
 
     /* solhint-disable function-max-lines */
-    function getRate(ERC20Detailed token, uint currentBlockNumber, bool buy, uint qty) public view returns(uint) {
+    function getRate(ERC20Interface token, uint currentBlockNumber, bool buy, uint qty) public view returns(uint) {
         // check if trade is enabled
         if (!tokenData[token].enabled) return 0;
         if (tokenControlInfo[token].minimalRecordResolution == 0) return 0; // token control info not set
@@ -264,14 +264,14 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
     /* solhint-enable function-max-lines */
 
-    function getBasicRate(ERC20Detailed token, bool buy) public view returns(uint) {
+    function getBasicRate(ERC20Interface token, bool buy) public view returns(uint) {
         if (buy)
             return tokenData[token].baseBuyRate;
         else
             return tokenData[token].baseSellRate;
     }
 
-    function getCompactData(ERC20Detailed token) public view returns(uint, uint, byte, byte) {
+    function getCompactData(ERC20Interface token) public view returns(uint, uint, byte, byte) {
         require(tokenData[token].listed);
 
         uint arrayIndex = tokenData[token].compactDataArrayIndex;
@@ -285,12 +285,12 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
         );
     }
 
-    function getTokenBasicData(ERC20Detailed token) public view returns(bool, bool) {
+    function getTokenBasicData(ERC20Interface token) public view returns(bool, bool) {
         return (tokenData[token].listed, tokenData[token].enabled);
     }
 
     /* solhint-disable code-complexity */
-    function getStepFunctionData(ERC20Detailed token, uint command, uint param) public view returns(int) {
+    function getStepFunctionData(ERC20Interface token, uint command, uint param) public view returns(int) {
         if (command == 0) return int(tokenData[token].buyRateQtyStepFunction.x.length);
         if (command == 1) return tokenData[token].buyRateQtyStepFunction.x[param];
         if (command == 2) return int(tokenData[token].buyRateQtyStepFunction.y.length);
@@ -315,16 +315,16 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
     /* solhint-enable code-complexity */
 
-    function getRateUpdateBlock(ERC20Detailed token) public view returns(uint) {
+    function getRateUpdateBlock(ERC20Interface token) public view returns(uint) {
         bytes32 compactData = tokenRatesCompactData[tokenData[token].compactDataArrayIndex];
         return getLast4Bytes(compactData);
     }
 
-    function getListedTokens() public view returns(ERC20Detailed[]) {
+    function getListedTokens() public view returns(ERC20Interface[]) {
         return listedTokens;
     }
 
-    function getTokenQty(ERC20Detailed token, uint ethQty, uint rate) internal view returns(uint) {
+    function getTokenQty(ERC20Interface token, uint ethQty, uint rate) internal view returns(uint) {
         uint dstDecimals = getDecimals(token);
         uint srcDecimals = ETH_DECIMALS;
 
@@ -336,7 +336,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
         return uint(b) / (BYTES_14_OFFSET * BYTES_14_OFFSET);
     }
 
-    function getRateByteFromCompactData(bytes32 data, ERC20Detailed token, bool buy) internal view returns(int8) {
+    function getRateByteFromCompactData(bytes32 data, ERC20Interface token, bool buy) internal view returns(int8) {
         uint fieldOffset = tokenData[token].compactDataFieldIndex;
         uint byteOffset;
         if (buy)

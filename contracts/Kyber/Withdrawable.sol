@@ -1,7 +1,7 @@
 pragma solidity ^0.4.25;
 
 
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "./ERC20Interface.sol";
 import "./PermissionGroups.sol";
 
 
@@ -13,13 +13,13 @@ import "./PermissionGroups.sol";
  */
 contract Withdrawable is PermissionGroups {
 
-    event TokenWithdraw(IERC20 token, uint amount, address sendTo);
+    event TokenWithdraw(ERC20Interface token, uint amount, address sendTo);
 
     /**
-     * @dev Withdraw all ERC20 compatible tokens
-     * @param token ERC20 The address of the token contract
+     * @dev Withdraw all ERC20Interface compatible tokens
+     * @param token ERC20Interface The address of the token contract
      */
-    function withdrawToken(IERC20 token, uint amount, address sendTo) external onlyAdmin {
+    function withdrawToken(ERC20Interface token, uint amount, address sendTo) external onlyAdmin {
         require(token.transfer(sendTo, amount));
         TokenWithdraw(token, amount, sendTo);
     }

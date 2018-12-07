@@ -1,22 +1,22 @@
 pragma solidity ^0.4.25;
 
 
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "./ERC20Interface.sol";
+import "./Withdrawable.sol";
 import "./Utils.sol";
 import "./SanityRatesInterface.sol";
-import "./Withdrawable.sol";
 
 
 contract SanityRates is SanityRatesInterface, Withdrawable, Utils {
     mapping(address=>uint) public tokenRate;
     mapping(address=>uint) public reasonableDiffInBps;
 
-    constructor(address _admin) public {
+    function SanityRates(address _admin) public {
         require(_admin != address(0));
         admin = _admin;
     }
 
-    function setReasonableDiff(IERC20[] srcs, uint[] diff) public onlyAdmin {
+    function setReasonableDiff(ERC20Interface[] srcs, uint[] diff) public onlyAdmin {
         require(srcs.length == diff.length);
         for (uint i = 0; i < srcs.length; i++) {
             require(diff[i] <= 100 * 100);
@@ -24,7 +24,7 @@ contract SanityRates is SanityRatesInterface, Withdrawable, Utils {
         }
     }
 
-    function setSanityRates(IERC20[] srcs, uint[] rates) public onlyOperator {
+    function setSanityRates(ERC20Interface[] srcs, uint[] rates) public onlyOperator {
         require(srcs.length == rates.length);
 
         for (uint i = 0; i < srcs.length; i++) {
@@ -33,7 +33,7 @@ contract SanityRates is SanityRatesInterface, Withdrawable, Utils {
         }
     }
 
-    function getSanityRate(IERC20 src, IERC20 dest) public view returns(uint) {
+    function getSanityRate(ERC20Interface src, ERC20Interface dest) public view returns(uint) {
         if (src != ETH_TOKEN_ADDRESS && dest != ETH_TOKEN_ADDRESS) return 0;
 
         uint rate;

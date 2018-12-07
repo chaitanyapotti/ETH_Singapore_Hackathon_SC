@@ -1,11 +1,12 @@
 pragma solidity ^0.4.25;
 
 
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "./ERC20Interface.sol";
 import "./Withdrawable.sol";
 
 
 contract VolumeImbalanceRecorder is Withdrawable {
+
     uint constant internal SLIDING_WINDOW_SIZE = 5;
     uint constant internal POW_2_64 = 2 ** 64;
 
@@ -28,13 +29,13 @@ contract VolumeImbalanceRecorder is Withdrawable {
 
     mapping(address => mapping(uint=>uint)) public tokenImbalanceData;
 
-    constructor(address _admin) public {
+    function VolumeImbalanceRecorder(address _admin) public {
         require(_admin != address(0));
         admin = _admin;
     }
 
     function setTokenControlInfo(
-        IERC20 token,
+        ERC20Interface token,
         uint minimalRecordResolution,
         uint maxPerBlockImbalance,
         uint maxTotalImbalance
@@ -50,14 +51,14 @@ contract VolumeImbalanceRecorder is Withdrawable {
             );
     }
 
-    function getTokenControlInfo(IERC20 token) public view returns(uint, uint, uint) {
+    function getTokenControlInfo(ERC20Interface token) public view returns(uint, uint, uint) {
         return (tokenControlInfo[token].minimalRecordResolution,
                 tokenControlInfo[token].maxPerBlockImbalance,
                 tokenControlInfo[token].maxTotalImbalance);
     }
 
     function addImbalance(
-        IERC20 token,
+        ERC20Interface token,
         int buyAmount,
         uint rateUpdateBlock,
         uint currentBlock
@@ -99,13 +100,13 @@ contract VolumeImbalanceRecorder is Withdrawable {
         tokenImbalanceData[token][currentBlockIndex] = encodeTokenImbalanceData(currentBlockData);
     }
 
-    function setGarbageToVolumeRecorder(IERC20 token) internal {
+    function setGarbageToVolumeRecorder(ERC20Interface token) internal {
         for (uint i = 0; i < SLIDING_WINDOW_SIZE; i++) {
             tokenImbalanceData[token][i] = 0x1;
         }
     }
 
-    function getImbalanceInRange(IERC20 token, uint startBlock, uint endBlock) internal view returns(int buyImbalance) {
+    function getImbalanceInRange(ERC20Interface token, uint startBlock, uint endBlock) internal view returns(int buyImbalance) {
         // check the imbalance in the sliding window
         require(startBlock <= endBlock);
 
@@ -120,7 +121,7 @@ contract VolumeImbalanceRecorder is Withdrawable {
         }
     }
 
-    function getImbalanceSinceRateUpdate(IERC20 token, uint rateUpdateBlock, uint currentBlock)
+    function getImbalanceSinceRateUpdate(ERC20Interface token, uint rateUpdateBlock, uint currentBlock)
         internal view
         returns(int buyImbalance, int currentBlockImbalance)
     {
@@ -153,7 +154,7 @@ contract VolumeImbalanceRecorder is Withdrawable {
         }
     }
 
-    function getImbalance(IERC20 token, uint rateUpdateBlock, uint currentBlock)
+    function getImbalance(ERC20Interface token, uint rateUpdateBlock, uint currentBlock)
         internal view
         returns(int totalImbalance, int currentBlockImbalance)
     {
@@ -170,11 +171,11 @@ contract VolumeImbalanceRecorder is Withdrawable {
         currentBlockImbalance *= resolution;
     }
 
-    function getMaxPerBlockImbalance(IERC20 token) internal view returns(uint) {
+    function getMaxPerBlockImbalance(ERC20Interface token) internal view returns(uint) {
         return tokenControlInfo[token].maxPerBlockImbalance;
     }
 
-    function getMaxTotalImbalance(IERC20 token) internal view returns(uint) {
+    function getMaxTotalImbalance(ERC20Interface token) internal view returns(uint) {
         return tokenControlInfo[token].maxTotalImbalance;
     }
 
