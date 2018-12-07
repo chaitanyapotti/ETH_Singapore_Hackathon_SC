@@ -28,7 +28,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electusaction": "^2.4.1",
+    "openzeppelin-solidity": "^2.0.0",
+    "electusvoting": "^2.4.2",
     "truffle-hdwallet-provider": "1.0.0-web3one.1"
   },
   "devDependencies": {
