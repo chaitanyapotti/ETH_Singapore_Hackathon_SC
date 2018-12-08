@@ -75,10 +75,10 @@ contract CrowdSale is Ownable {
 
     function isValidContribution() internal view returns (bool) {  
         uint userContrib = userContributonDetails[msg.sender];
-        uint256 currentUserContribution = SafeMath.add(msg.value, userContrib);
+        uint currentUserContribution = SafeMath.add(msg.value, userContrib);
         RoundData storage roundInfo = roundDetails;
         if ((msg.value >= etherMinContrib || SafeMath.add(SafeMath.mul(msg.value, roundInfo.tokenRate), 
-        roundInfo.totalTokensSold) >= roundInfo.tokenCount) && ((currentUserContribution <= etherMaxContrib))) {
+        roundInfo.totalTokensSold) >= roundInfo.tokenCount) && currentUserContribution <= etherMaxContrib) {
             return true;
         }
         return false;
@@ -117,7 +117,7 @@ contract CrowdSale is Ownable {
     }
 
     function processPayment(address contributor, uint etherAmount, uint256 tokenAmount) internal {
-        erc20Token.mint(contributor, tokenAmount, true);
+        erc20Token.mint(contributor, tokenAmount);
         treasury.processContribution.value(etherAmount)();
         emit LogContribution(contributor, etherAmount, tokenAmount);
     }

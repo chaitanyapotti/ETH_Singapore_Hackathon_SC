@@ -1,5 +1,3 @@
-/* global artifacts */
-/* eslint-disable no-unused-vars */
 const Network = artifacts.require("./KyberNetwork.sol");
 const NetworkProxy = artifacts.require("./KyberNetworkProxy.sol");
 const ConversionRates = artifacts.require("./ConversionRates.sol");
@@ -49,11 +47,11 @@ module.exports = async (deployer, network, accounts) => {
 
   await deployer.deploy(
     CrowdSale,
-    "100000000000000000",
-    "100000000000000000000",
+    "1000000000000000000",
+    "10000000000000000000",
     timeStamp + 12960,
     timeStamp,
-    "6380000000000000000000000",
+    "63800000000000000000000",
     "6380",
     PollFactory.address,
     DaicoToken.address

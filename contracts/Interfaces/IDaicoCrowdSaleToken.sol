@@ -2,7 +2,7 @@ pragma solidity ^0.4.25;
 
 
 interface IDaicoCrowdSaleToken {
-    function mint(address _to, uint256 _amount, bool _hasGovernance) external returns (bool);
+    function mint(address _to, uint256 _amount) external returns (bool);
 
     function finishMinting() external returns (bool);
 

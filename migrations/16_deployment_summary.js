@@ -8,7 +8,7 @@ const ConversionRates = artifacts.require("./ConversionRates.sol");
 const LiquidityConversionRates = artifacts.require("./LiquidityConversionRates.sol");
 const SanityRates = artifacts.require("./SanityRates.sol");
 const PollFactory = artifacts.require("./PollFactory.sol");
-const AutomatedReserve = artifacts.require("./KyberAutomatedReserve.sol");
+// const AutomatedReserve = artifacts.require("./KyberAutomatedReserve.sol");
 const FeeBurner = artifacts.require("./FeeBurner.sol");
 const WhiteList = artifacts.require("./WhiteList.sol");
 const ExpectedRate = artifacts.require("./ExpectedRate.sol");
@@ -66,7 +66,7 @@ module.exports = (deployer, network, accounts) => {
   console.log(`(LiquidityConversionRates) ${LiquidityConversionRates.address}`);
   console.log(`(SanityRates) ${SanityRates.address}`);
   console.log(`(KyberReserve) ${PollFactory.address}`);
-  console.log(`(AutomatedKyberReserve) ${AutomatedReserve.address}`);
+  // console.log(`(AutomatedKyberReserve) ${AutomatedReserve.address}`);
   console.log(`(FeeBurner) ${FeeBurner.address}`);
   console.log(`(WhiteList) ${WhiteList.address}`);
   console.log(`(ExpectedRate) ${ExpectedRate.address}`);

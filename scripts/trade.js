@@ -2,10 +2,12 @@
 /* eslint-disable no-underscore-dangle, no-unused-vars */
 const BN = require("bn.js");
 const moment = require("moment");
+const increaseTime = require("./increaseTime");
 
 const Network = artifacts.require("./KyberNetwork.sol");
 const NetworkProxy = artifacts.require("./KyberNetworkProxy.sol");
 const PollFactory = artifacts.require("./PollFactory.sol");
+const CrowdSale = artifacts.require("./CrowdSale.sol");
 const DAI = artifacts.require("./Dai.sol");
 
 function stdlog(input) {
@@ -33,6 +35,37 @@ module.exports = async callback => {
     let expectedRate;
     let slippageRate;
     let result;
+
+    const crowdSale = await CrowdSale.at(CrowdSale.address);
+
+    await increaseTime(10, web3);
+
+    await crowdSale.startNewRound();
+
+    await crowdSale.sendTransaction({
+      value: await web3.utils.toWei("1", "ether").toString(),
+      from: accounts[7]
+    });
+    await crowdSale.sendTransaction({
+      value: await web3.utils.toWei("2", "ether").toString(),
+      from: accounts[8]
+    });
+    await crowdSale.sendTransaction({
+      value: await web3.utils.toWei("2", "ether").toString(),
+      from: accounts[9]
+    });
+    await crowdSale.sendTransaction({
+      value: await web3.utils.toWei("1", "ether").toString(),
+      from: accounts[10]
+    });
+    await crowdSale.sendTransaction({
+      value: await web3.utils.toWei("2", "ether").toString(),
+      from: accounts[10]
+    });
+    await crowdSale.sendTransaction({
+      value: await web3.utils.toWei("2", "ether").toString(),
+      from: accounts[10]
+    });
 
     // Set the instances
     const NetworkProxyInstance = await NetworkProxy.at(NetworkProxy.address);
@@ -87,6 +120,7 @@ module.exports = async callback => {
     stdlog("- END -");
     callback();
   } catch (error) {
+    console.log(error);
     callback(error);
   }
 };
