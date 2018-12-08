@@ -40,7 +40,7 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
     constructor(address _erc20Token, address _teamAddress, uint _initialTap, uint _capPercent, 
     uint _killAcceptancePercent, uint _tapAcceptancePercent, uint _tapIncrementFactor, address _pollDeployer, 
     address _kyberNetwork, ConversionRatesInterface _ratesContract, address _daiAddress)
-        public Treasury(_erc20Token, _teamAddress, _initialTap, _tapIncrementFactor, _pollDeployer) {
+        public Treasury(_erc20Token, _teamAddress, _initialTap, _tapIncrementFactor, _pollDeployer, _daiAddress) {
             //check for cap maybe
             // cap is 10^2 multiplied to actual percentage - already in poll
             require(_killAcceptancePercent <= 80, "Kill Acceptance should be less than 80 %");
@@ -50,9 +50,7 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
             tapAcceptancePercent = _tapAcceptancePercent;
             tapIncrementFactor = _tapIncrementFactor;
             kyberNetwork = _kyberNetwork;
-            daiAddress = _daiAddress;
             conversionRatesContract = _ratesContract;
-            tradeEnabled = true;
         }
     
     function() public payable {
@@ -70,6 +68,8 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
         bool canKillApp = canKill();
         require(canKillApp, "Cannot Kill Now");
         state = TreasuryState.Killed;
+        tradeEnabled = false;
+        emit TradeEnabled(false);
         emit RefundStarted();
     }
 
@@ -99,28 +99,44 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
         splineHeightAtPivot = 0;
         pivotTime = now;
         currentTap = initialTap;
+        tradeEnabled = true;
+        emit TradeEnabled(true);
     }
 
     function withdrawAmount(uint _amount) external onlyOwner onlyDuringGovernance {
         bool canKillApp =  canKill();
         require(!canKillApp, "cannot withdraw now");
-        uint daiBalance = ERC20Interface(daiAddress).balanceOf(address(this));
-        uint daiRate;
-        (daiRate, ) = KyberNetworkProxy(kyberNetwork).getExpectedRate(ERC20Interface(daiAddress), 
-            ETH_TOKEN_ADDRESS, daiBalance);
-        uint daiValue = SafeMath.div(daiBalance, daiRate);
-        splineHeightAtPivot = SafeMath.add(splineHeightAtPivot, SafeMath.mul(SafeMath.sub(now, 
-                pivotTime), currentTap));
-        
-        uint amountWithdrawable = _amount <= address(this).balance && _amount <= splineHeightAtPivot - 
-            withdrawnTillNow ? _amount : _amount <= address(this).balance + daiValue ? address(this).balance : 0;
-        require(amountWithdrawable > 0, "Insufficient funds");
-        require(_amount <= splineHeightAtPivot - withdrawnTillNow, "Not allowed");
-        pivotTime = now;
-        splineHeightAtPivot = SafeMath.sub(splineHeightAtPivot, _amount);
-        withdrawnTillNow += amountWithdrawable;    
-        teamAddress.transfer(amountWithdrawable);
-        emit Withdraw(amountWithdrawable);
+        uint contractEthBalance = address(this).balance;
+        uint withdrawableAmount;
+        uint tokensToSend;
+        uint ethEqOfDai;
+        ERC20Interface token = ERC20Interface(daiAddress);
+        if (_amount <= contractEthBalance) {
+            splineHeightAtPivot = SafeMath.add(splineHeightAtPivot, SafeMath.mul(SafeMath.sub(now, 
+                    pivotTime), currentTap));
+            require(_amount <= splineHeightAtPivot - withdrawnTillNow, "Not allowed");
+            withdrawableAmount = _amount;
+        } else {
+            uint daiBalance = token.balanceOf(address(this));
+            uint ethRate;
+            ethEqOfDai = SafeMath.sub(_amount, contractEthBalance);
+            (ethRate, ) = KyberNetworkProxy(kyberNetwork).getExpectedRate(ETH_TOKEN_ADDRESS, 
+            ERC20Interface(daiAddress), ethEqOfDai);
+            uint daiAsEthValue = SafeMath.mul(daiBalance, ethRate);
+            tokensToSend = SafeMath.div(ethEqOfDai, ethRate);
+            bool canSend;
+            if (_amount <= SafeMath.add(contractEthBalance, daiAsEthValue)) {
+                withdrawableAmount = contractEthBalance;
+                canSend = true;
+            }
+        }
+        if (withdrawableAmount >= 0) {
+            pivotTime = now;
+            withdrawnTillNow = SafeMath.add(withdrawnTillNow, SafeMath.add(withdrawableAmount, ethEqOfDai));
+            if (canSend) require(token.transfer(msg.sender, tokensToSend), "Transfer unsuccessful");
+            if (withdrawableAmount > 0) teamAddress.transfer(withdrawableAmount);
+            emit Withdraw(withdrawableAmount);
+        }
     }
 
     function isPollAddress(address _address) external view returns (bool) {

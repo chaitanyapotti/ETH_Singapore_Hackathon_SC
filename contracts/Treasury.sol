@@ -25,16 +25,17 @@ contract Treasury is Ownable {
     uint public totalEtherRaised;
     uint public tapIncrementFactor; // = 150;
 
-    event RefundSent(address tokenHolder, uint256 amountWei, uint256 tokenAmount);
+    event RefundSent(address tokenHolder, uint256 amountWei, uint amountDai, uint256 tokenAmount);
     event DaicoRefunded();
     
     constructor(address _erc20Token, address _teamAddress, uint _initialTap, uint _tapIncrementFactor, 
-        address _pollDeployer) public {
+        address _pollDeployer, address _daiAddress) public {
         erc20Token = IDaicoToken(_erc20Token);
         teamAddress = _teamAddress;
         initialTap = _initialTap;
         tapIncrementFactor = _tapIncrementFactor;
         pollDeployer = PollDeployer(_pollDeployer);
+        daiAddress = _daiAddress;
     }
 
     modifier onlyCrowdSale() {
@@ -94,10 +95,14 @@ contract Treasury is Ownable {
     function refundContributor(address _contributor) internal {
         uint tokenBalance = erc20Token.balanceOf(_contributor);
         require(tokenBalance > 0, "Zero token balance");
+        ERC20Interface token = ERC20Interface(daiAddress);
+        uint daiBalance = token.balanceOf(address(this));
         uint refundAmount = SafeMath.div(SafeMath.mul(tokenBalance, address(this).balance), erc20Token.totalSupply());
-        require(refundAmount > 0, "No refund amount available");
+        uint daiRefundAmount = SafeMath.div(SafeMath.mul(tokenBalance, daiBalance), erc20Token.totalSupply());
+        require(refundAmount > 0 || daiRefundAmount > 0, "No refund amount available");
         erc20Token.burnFrom(_contributor, tokenBalance);
-        _contributor.transfer(refundAmount);
-        emit RefundSent(_contributor, refundAmount, tokenBalance);
+        if (daiRefundAmount > 0) require(token.transfer(msg.sender, daiRefundAmount), "Transfer unsuccessful");
+        if (refundAmount > 0) _contributor.transfer(refundAmount);
+        emit RefundSent(_contributor, refundAmount, daiRefundAmount, tokenBalance);
     }
 }
