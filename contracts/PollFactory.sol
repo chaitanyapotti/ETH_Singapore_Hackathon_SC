@@ -2,12 +2,6 @@ pragma solidity ^0.4.25;
 
 import "./Treasury.sol";
 import "./Poll/UnBoundPoll.sol";
-import "./Kyber/Utils.sol";
-import "./Kyber/Withdrawable.sol";
-import "./Kyber/ConversionRatesInterface.sol";
-import "./Kyber/SanityRatesInterface.sol";
-import "./Kyber/KyberReserveInterface.sol";
-import "./Kyber/KyberNetworkProxy.sol";
 
 
 contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
@@ -23,7 +17,6 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
 
     //Kyber
     address public kyberNetwork;
-    address public daiAddress;
     bool public tradeEnabled;
     ConversionRatesInterface public conversionRatesContract;
     SanityRatesInterface public sanityRatesContract;

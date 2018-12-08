@@ -4,6 +4,12 @@ import "./Interfaces/IDaicoToken.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./PollDeployer.sol";
+import "./Kyber/Utils.sol";
+import "./Kyber/Withdrawable.sol";
+import "./Kyber/ConversionRatesInterface.sol";
+import "./Kyber/SanityRatesInterface.sol";
+import "./Kyber/KyberReserveInterface.sol";
+import "./Kyber/KyberNetworkProxy.sol";
 
 
 contract Treasury is Ownable {
@@ -24,6 +30,7 @@ contract Treasury is Ownable {
     uint public pivotTime;
     uint public totalEtherRaised;
     uint public tapIncrementFactor; // = 150;
+    address public daiAddress;
 
     event RefundSent(address tokenHolder, uint256 amountWei, uint amountDai, uint256 tokenAmount);
     event DaicoRefunded();
