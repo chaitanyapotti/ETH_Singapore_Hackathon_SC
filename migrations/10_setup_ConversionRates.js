@@ -40,7 +40,6 @@ module.exports = async (deployer, network, accounts) => {
   Object.keys(tokenConfig.Reserve).forEach(async key => {
     // Setup tokenAddresses array for baseBuy and baseSell
     tokenAddresses.push(eval(key).address);
-    console.log(tokenAddresses);
     // Add the token
     tx(await ConversionRatesInstance.addToken(eval(key).address), "addToken()");
 
@@ -82,7 +81,6 @@ module.exports = async (deployer, network, accounts) => {
     baseSell.push(networkConfig.ConversionRates[`${key}BaseSell`]);
     bytes14.push(networkConfig.ConversionRates.bytes14);
   });
-  console.log(baseBuy, baseSell, "bs");
   // Set the base rate of each token
   tx(
     await ConversionRatesInstance.setBaseRate(tokenAddresses, baseBuy, baseSell, bytes14, bytes14, blockNumber, [0, 0], { from: operator }),

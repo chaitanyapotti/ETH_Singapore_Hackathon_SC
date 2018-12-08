@@ -24,24 +24,20 @@ function tx(result, call) {
 }
 
 module.exports = async (deployer, network, accounts) => {
-  const operator = accounts[0];
-  const reasonableDiffs = [];
-  const sanityRates = [];
-  const tokens = [];
-
-  // Set the instances
-  const SanityRatesInstance = await SanityRates.at(SanityRates.address);
-
-  // Set the input arrays
-  Object.keys(tokenConfig.Reserve).forEach(key => {
-    reasonableDiffs.push(networkConfig.SanityRates.reasonableDiff);
-    sanityRates.push(networkConfig.SanityRates[`${key}SanityRate`]);
-    tokens.push(eval(key).address);
-  });
-
+  // const operator = accounts[0];
+  // const reasonableDiffs = [];
+  // const sanityRates = [];
+  // const tokens = [];
+  // // Set the instances
+  // const SanityRatesInstance = await SanityRates.at(SanityRates.address);
+  // // Set the input arrays
+  // Object.keys(tokenConfig.Reserve).forEach(key => {
+  //   reasonableDiffs.push(networkConfig.SanityRates.reasonableDiff);
+  //   sanityRates.push(networkConfig.SanityRates[`${key}SanityRate`]);
+  //   tokens.push(eval(key).address);
+  // });
   // Setup the reasonable diffs for all tokens
-  tx(await SanityRatesInstance.setReasonableDiff(tokens, reasonableDiffs), "setReasonableDiff()");
-
+  // tx(await SanityRatesInstance.setReasonableDiff(tokens, reasonableDiffs), "setReasonableDiff()");
   // Set the sanity rates for all tokens
-  tx(await SanityRatesInstance.setSanityRates(tokens, sanityRates, { from: operator }), "setSanityRates()");
+  // tx(await SanityRatesInstance.setSanityRates(tokens, sanityRates, { from: operator }), "setSanityRates()");
 };

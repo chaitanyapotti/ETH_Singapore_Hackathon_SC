@@ -98,19 +98,19 @@ module.exports = async callback => {
     tx(result, "DAI <-> ETH swapTokenToEther()");
 
     ({ expectedRate, slippageRate } = await NetworkProxyInstance.getExpectedRate(
-      DAI.address, // srcToken
-      ETH_ADDRESS, // destToken
-      web3.utils.toWei(new BN(1000)) // srcQty
+      ETH_ADDRESS, // srcToken
+      DAI.address, // destToken
+      web3.utils.toWei(new BN(2)) // srcQty
     ));
+    console.log("got expected rate", web3.utils.fromWei(expectedRate), slippageRate);
 
-    result = await NetworkProxyInstance.swapTokenToEther(
-      DAI.address, // srcToken
-      web3.utils.toWei(new BN(1000)), // srcAmount
+    result = await NetworkProxyInstance.swapEtherToToken(
+      DAI.address, // destToken
       expectedRate, // minConversionRate
-      { from: userWallet }
+      { from: userWallet, value: web3.utils.toWei(new BN(2)) }
     );
-    tx(result, "DAI <-> ETH swapTokenToEther()");
 
+    tx(result, "ETH <-> DAI swapTokenToEther()");
     stdlog(`DAI balance of ${userWallet} = ${web3.utils.fromWei(await DAIInstance.balanceOf(userWallet))}`);
     stdlog(`ETH balance of ${userWallet} = ${web3.utils.fromWei(await web3.eth.getBalance(userWallet))}`);
 

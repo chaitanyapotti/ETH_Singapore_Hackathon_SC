@@ -4,7 +4,7 @@ const fs = require("fs");
 
 const Network = artifacts.require("./KyberNetwork.sol");
 const ConversionRates = artifacts.require("./ConversionRates.sol");
-const SanityRates = artifacts.require("./SanityRates.sol");
+// const SanityRates = artifacts.require("./SanityRates.sol");
 const PollFactory = artifacts.require("./PollFactory.sol");
 
 const KNC = artifacts.require("./KyberNetworkCrystal.sol");
@@ -33,7 +33,7 @@ module.exports = async (deployer, network, accounts) => {
   const PollFactoryInstance = await PollFactory.at(PollFactory.address);
 
   // Set the reserve contract addresses
-  tx(await PollFactoryInstance.setContracts(Network.address, ConversionRates.address, SanityRates.address), "setContracts()");
+  tx(await PollFactoryInstance.setContracts(Network.address, ConversionRates.address, 0), "setContracts()");
 
   // Add reserve to network
   tx(await NetworkInstance.addReserve(PollFactoryInstance.address, true), "addReserve()");

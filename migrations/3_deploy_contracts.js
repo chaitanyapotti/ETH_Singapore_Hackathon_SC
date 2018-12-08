@@ -2,7 +2,7 @@ const Network = artifacts.require("./KyberNetwork.sol");
 const NetworkProxy = artifacts.require("./KyberNetworkProxy.sol");
 const ConversionRates = artifacts.require("./ConversionRates.sol");
 const LiquidityConversionRates = artifacts.require("./LiquidityConversionRates.sol");
-const SanityRates = artifacts.require("./SanityRates.sol");
+// const SanityRates = artifacts.require("./SanityRates.sol");
 const CrowdSale = artifacts.require("./CrowdSale.sol");
 const PollFactory = artifacts.require("./PollFactory.sol");
 const PollDeployer = artifacts.require("./PollDeployer.sol");
@@ -27,7 +27,7 @@ module.exports = async (deployer, network, accounts) => {
   await deployer.deploy(NetworkProxy, admin);
   await deployer.deploy(ConversionRates, admin);
   await deployer.deploy(LiquidityConversionRates, admin, DAI.address);
-  await deployer.deploy(SanityRates, admin);
+  // await deployer.deploy(SanityRates, admin);
 
   await deployer.deploy(
     PollFactory,

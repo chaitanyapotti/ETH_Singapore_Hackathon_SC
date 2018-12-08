@@ -376,9 +376,9 @@ contract KyberNetwork is Withdrawable, Utils2, KyberNetworkInterface {
         BestRateResult memory rateResult =
         findBestRateTokenToToken(tradeInput.src, tradeInput.dest, tradeInput.srcAmount);
 
-        require(rateResult.rate > 0);
-        require(rateResult.rate < MAX_RATE);
-        require(rateResult.rate >= tradeInput.minConversionRate);
+        require(rateResult.rate > 0, "a");
+        require(rateResult.rate < MAX_RATE, "b");
+        require(rateResult.rate >= tradeInput.minConversionRate, "c");
 
         uint actualDestAmount;
         uint weiAmount;

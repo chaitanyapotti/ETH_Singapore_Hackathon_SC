@@ -31,7 +31,7 @@ module.exports = async (deployer, network, accounts) => {
   // Set the instances
   const NetworkInstance = await Network.at(Network.address);
   const ConversionRatesInstance = await ConversionRates.at(ConversionRates.address);
-  const SanityRatesInstance = await SanityRates.at(SanityRates.address);
+  // const SanityRatesInstance = await SanityRates.at(SanityRates.address);
   // const AutomatedReserveInstance = await AutomatedReserve.at(AutomatedReserve.address);
   const FeeBurnerInstance = await FeeBurner.at(FeeBurner.address);
   const WhiteListInstance = await WhiteList.at(WhiteList.address);
@@ -49,7 +49,7 @@ module.exports = async (deployer, network, accounts) => {
   tx(await FeeBurnerInstance.addOperator(operator), "addOperator()");
   tx(await WhiteListInstance.addOperator(operator), "addOperator()");
   tx(await ExpectedRateInstance.addOperator(operator), "addOperator()");
-  tx(await SanityRatesInstance.addOperator(operator), "addOperator()");
+  // tx(await SanityRatesInstance.addOperator(operator), "addOperator()");
 
   tx(await DaicoTokenInstance.setTreasuryAddress(PollFactory.address), "setTreasuryAddress()");
   tx(await DaicoTokenInstance.setCrowdSaleAddress(CrowdSale.address), "setCrowdSaleAddress()");
