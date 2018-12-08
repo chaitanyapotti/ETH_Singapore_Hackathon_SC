@@ -111,12 +111,12 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
             withdrawableAmount = _amount;
         } else {
             uint daiBalance = token.balanceOf(address(this));
-            uint ethRate;
+            uint daiRate;
             ethEqOfDai = SafeMath.sub(_amount, contractEthBalance);
-            (ethRate, ) = KyberNetworkProxy(kyberNetwork).getExpectedRate(ETH_TOKEN_ADDRESS, 
-            ERC20Interface(daiAddress), ethEqOfDai);
-            uint daiAsEthValue = SafeMath.mul(daiBalance, ethRate);
-            tokensToSend = SafeMath.div(ethEqOfDai, ethRate);
+            (daiRate, ) = KyberNetworkProxy(kyberNetwork).getExpectedRate(ERC20Interface(daiAddress), 
+                ETH_TOKEN_ADDRESS, 10**18);
+            uint daiAsEthValue = SafeMath.div(SafeMath.mul(daiBalance, daiRate), 10**18);
+            tokensToSend = SafeMath.mul(SafeMath.div(ethEqOfDai, daiRate), 10**18);
             bool canSend;
             if (_amount <= SafeMath.add(contractEthBalance, daiAsEthValue)) {
                 withdrawableAmount = contractEthBalance;

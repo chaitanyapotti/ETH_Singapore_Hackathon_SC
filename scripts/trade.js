@@ -36,36 +36,36 @@ module.exports = async callback => {
     let slippageRate;
     let result;
 
-    const crowdSale = await CrowdSale.at(CrowdSale.address);
+    // const crowdSale = await CrowdSale.at(CrowdSale.address);
 
-    await increaseTime(10, web3);
+    // await increaseTime(10, web3);
 
-    await crowdSale.startNewRound();
+    // await crowdSale.startNewRound();
 
-    await crowdSale.sendTransaction({
-      value: await web3.utils.toWei("1", "ether").toString(),
-      from: accounts[7]
-    });
-    await crowdSale.sendTransaction({
-      value: await web3.utils.toWei("2", "ether").toString(),
-      from: accounts[8]
-    });
-    await crowdSale.sendTransaction({
-      value: await web3.utils.toWei("2", "ether").toString(),
-      from: accounts[9]
-    });
-    await crowdSale.sendTransaction({
-      value: await web3.utils.toWei("1", "ether").toString(),
-      from: accounts[10]
-    });
-    await crowdSale.sendTransaction({
-      value: await web3.utils.toWei("2", "ether").toString(),
-      from: accounts[10]
-    });
-    await crowdSale.sendTransaction({
-      value: await web3.utils.toWei("2", "ether").toString(),
-      from: accounts[10]
-    });
+    // await crowdSale.sendTransaction({
+    //   value: await web3.utils.toWei("1", "ether").toString(),
+    //   from: accounts[7]
+    // });
+    // await crowdSale.sendTransaction({
+    //   value: await web3.utils.toWei("2", "ether").toString(),
+    //   from: accounts[8]
+    // });
+    // await crowdSale.sendTransaction({
+    //   value: await web3.utils.toWei("2", "ether").toString(),
+    //   from: accounts[9]
+    // });
+    // await crowdSale.sendTransaction({
+    //   value: await web3.utils.toWei("1", "ether").toString(),
+    //   from: accounts[10]
+    // });
+    // await crowdSale.sendTransaction({
+    //   value: await web3.utils.toWei("2", "ether").toString(),
+    //   from: accounts[10]
+    // });
+    // await crowdSale.sendTransaction({
+    //   value: await web3.utils.toWei("2", "ether").toString(),
+    //   from: accounts[10]
+    // });
 
     // Set the instances
     const NetworkProxyInstance = await NetworkProxy.at(NetworkProxy.address);
@@ -81,21 +81,21 @@ module.exports = async callback => {
     stdlog(`DAI balance of Treasury = ${web3.utils.fromWei(await DAIInstance.balanceOf(PollFactory.address))}`);
 
     // Approve the KyberNetwork contract to spend user's tokens
-    await DAIInstance.approve(NetworkProxy.address, web3.utils.toWei(new BN(1000000)), { from: userWallet });
-    ({ expectedRate, slippageRate } = await NetworkProxyInstance.getExpectedRate(
-      DAI.address, // srcToken
-      ETH_ADDRESS, // destToken
-      web3.utils.toWei(new BN(100)) // srcQty
-    ));
-    console.log("got expected rate", expectedRate, slippageRate);
+    // await DAIInstance.approve(NetworkProxy.address, web3.utils.toWei(new BN(1000000)), { from: userWallet });
+    // ({ expectedRate, slippageRate } = await NetworkProxyInstance.getExpectedRate(
+    //   DAI.address, // srcToken
+    //   ETH_ADDRESS, // destToken
+    //   web3.utils.toWei(new BN(100)) // srcQty
+    // ));
+    // console.log("got expected rate", expectedRate, slippageRate);
 
-    result = await NetworkProxyInstance.swapTokenToEther(
-      DAI.address, // srcToken
-      web3.utils.toWei(new BN(100)), // srcAmount
-      expectedRate, // minConversionRate
-      { from: userWallet }
-    );
-    tx(result, "DAI <-> ETH swapTokenToEther()");
+    // result = await NetworkProxyInstance.swapTokenToEther(
+    //   DAI.address, // srcToken
+    //   web3.utils.toWei(new BN(100)), // srcAmount
+    //   expectedRate, // minConversionRate
+    //   { from: userWallet }
+    // );
+    // tx(result, "DAI <-> ETH swapTokenToEther()");
 
     ({ expectedRate, slippageRate } = await NetworkProxyInstance.getExpectedRate(
       ETH_ADDRESS, // srcToken
@@ -120,7 +120,6 @@ module.exports = async callback => {
     stdlog("- END -");
     callback();
   } catch (error) {
-    console.log(error);
     callback(error);
   }
 };

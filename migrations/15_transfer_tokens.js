@@ -42,6 +42,6 @@ module.exports = async (deployer, network, accounts) => {
   tx(await DAIInstance.transfer(userWallet, DAIAmount), "transfer()");
   // Transfer tokens and ETH to the reserve
   tx(await KNCInstance.transfer(PollFactory.address, KNCAmount), "transfer()");
-  tx(await DAIInstance.transfer(PollFactory.address, DAIAmount), "transfer()");
+  // tx(await DAIInstance.transfer(PollFactory.address, DAIAmount), "transfer()");
   tx(await ReserveInstance.sendTransaction({ from: admin, value: web3.utils.toWei(new BN(100)) }), "sendTransaction()");
 };
