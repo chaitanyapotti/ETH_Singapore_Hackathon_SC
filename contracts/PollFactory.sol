@@ -24,7 +24,7 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
 
     event RefundStarted();
     event Withdraw(uint amountWei);
-    event TapIncreased(uint amountWei, address contractAddress);
+    event TapIncreased(uint currentTap, address contractAddress);
     event TapPollCreated(address tapPollAddress);
 
     //Kyber
