@@ -38,7 +38,7 @@ module.exports = async callback => {
     await tapPollInstance.vote(0, { from: accounts[6] });
 
     const tapPollNum = await tapPollInstance.getVoteTally(0);
-    const tapPollDenom = await tapPollInstance.getVoterBaseDenominator();
+    const tapPollDenom = await daicoToken.totalSupply();
     const tapPollConsensus = parseFloat(tapPollNum) / parseFloat(tapPollDenom);
     console.log("Tap Poll Consensus: ", tapPollConsensus);
 
