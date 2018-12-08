@@ -11,9 +11,10 @@ module.exports = async callback => {
     const accounts = await web3.eth.getAccounts();
 
     const daicoToken = await DaicoToken.at(DaicoToken.address);
-    console.log(await daicoToken.balanceOf(accounts[0]));
-    await daicoToken.transfer(accounts[2], 1000, { from: accounts[0] });
-    await daicoToken.transfer(accounts[3], 100, { from: accounts[2] });
+    console.log(await daicoToken.balanceOf(accounts[7]));
+    await daicoToken.transfer(accounts[8], 10000000, { from: accounts[9] });
+    await daicoToken.transfer(accounts[9], 100000, { from: accounts[10] });
+    await daicoToken.transfer(accounts[10], 100000, { from: accounts[10] });
     console.log(await daicoToken.balanceOf(accounts[2]));
     callback();
   } catch (error) {
