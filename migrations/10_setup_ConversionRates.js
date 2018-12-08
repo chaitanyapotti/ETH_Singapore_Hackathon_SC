@@ -28,7 +28,7 @@ function tx(result, call) {
 }
 
 module.exports = async (deployer, network, accounts) => {
-  const operator = accounts[1];
+  const operator = accounts[0];
   const baseBuy = [];
   const baseSell = [];
   const bytes14 = [];

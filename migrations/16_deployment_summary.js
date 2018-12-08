@@ -31,8 +31,8 @@ module.exports = (deployer, network, accounts) => {
   console.log("Permissions");
   console.log("==================");
   console.log(`(admin) ${accounts[0]}`);
-  console.log(`(operator) ${accounts[1]}`);
-  console.log(`(alerter) ${accounts[2]}`);
+  console.log(`(operator) ${accounts[0]}`);
+  console.log(`(alerter) ${accounts[0]}`);
 
   console.log("\n");
 

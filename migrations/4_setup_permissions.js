@@ -25,8 +25,8 @@ function tx(result, call) {
 }
 
 module.exports = async (deployer, network, accounts) => {
-  const operator = accounts[1];
-  const alerter = accounts[2];
+  const operator = accounts[0];
+  const alerter = accounts[0];
 
   // Set the instances
   const NetworkInstance = await Network.at(Network.address);

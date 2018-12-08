@@ -20,7 +20,7 @@ function tx(result, call) {
 }
 
 module.exports = async (deployer, network, accounts) => {
-  const operator = accounts[1];
+  const operator = accounts[0];
 
   // Set the instances
   const ExpectedRateInstance = await ExpectedRate.at(ExpectedRate.address);
