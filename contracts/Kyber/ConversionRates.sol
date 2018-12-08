@@ -6,6 +6,7 @@ import "./VolumeImbalanceRecorder.sol";
 import "./Utils.sol";
 import "./ConversionRatesInterface.sol";
 
+
 contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, Utils {
 
     // bps - basic rate steps. one step is 1 / 10000 of the rate.
@@ -148,11 +149,11 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
         public
         onlyOperator
     {
-        require(xBuy.length == yBuy.length);
-        require(xSell.length == ySell.length);
-        require(xBuy.length <= MAX_STEPS_IN_FUNCTION);
-        require(xSell.length <= MAX_STEPS_IN_FUNCTION);
-        require(tokenData[token].listed);
+        require(xBuy.length == yBuy.length, "Wrong x length");
+        require(xSell.length == ySell.length, "Wrong y length");
+        require(xBuy.length <= MAX_STEPS_IN_FUNCTION, "Wrong x steps");
+        require(xSell.length <= MAX_STEPS_IN_FUNCTION, "Wrong y steps");
+        require(tokenData[token].listed, "Unlisted");
 
         tokenData[token].buyRateImbalanceStepFunction = StepFunction(xBuy, yBuy);
         tokenData[token].sellRateImbalanceStepFunction = StepFunction(xSell, ySell);

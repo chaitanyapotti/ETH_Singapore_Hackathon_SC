@@ -1,0 +1,52 @@
+{
+  "KyberNetwork": {
+    "maxGasPrice": 50000000000,
+    "negDiffInBPS": 20
+  },
+  "FeeBurner": {
+    "reserveFees": 25,
+    "kncRate": 500,
+    "taxFeesBPS": 2000
+  },
+  "ExpectedRate": {
+    "minExpectedRateSlippage": 50,
+    "quantityFactor": 1
+  },
+  "SanityRates": {
+    "reasonableDiff": 1000,
+    "KNCSanityRate": 1840144285714286,
+    "OMGSanityRate": 17321646037735852,
+    "SALTSanityRate": 2073480000000000,
+    "ZILSanityRate": 162000000000000,
+    "DAISanityRate": 162000000000000
+  },
+  "WhiteList": {
+    "sgdToETHRate": 1984126984126984,
+    "defaultCategory": 0,
+    "defaultCap": 5000,
+    "userCategory": 1,
+    "userCap": 10000,
+    "kgtCategory": 2,
+    "kgtCap": 0,
+    "partnerCategory": 3,
+    "partnerCap": 1000000
+  },
+  "ConversionRates": {
+    "validDurationBlock": 1000000000,
+    "bytes14": "0x0000000000000000000000000000",
+    "KNCBaseBuy": "549000000000000000000",
+    "KNCBaseSell": "1813123931381047",
+    "DAIBaseSell": "161432777777778",
+    "DAIBaseBuy": "6117163764686418861883"
+  },
+  "feeSharingWallets": {
+    "bob": {
+      "wallet": "accounts[7]",
+      "fees": 4000
+    },
+    "alice": {
+      "wallet": "accounts[8]",
+      "fees": 5000
+    }
+  }
+}

@@ -7,6 +7,7 @@ import "./Kyber/Withdrawable.sol";
 import "./Kyber/ConversionRatesInterface.sol";
 import "./Kyber/SanityRatesInterface.sol";
 import "./Kyber/KyberReserveInterface.sol";
+import "./Kyber/KyberNetworkProxy.sol";
 
 
 contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
@@ -22,11 +23,11 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
 
     //Kyber
     address public kyberNetwork;
+    address public daiAddress;
     bool public tradeEnabled;
     ConversionRatesInterface public conversionRatesContract;
     SanityRatesInterface public sanityRatesContract;
-    mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
-    mapping(address=>address) public tokenWallet;
+    ERC20Interface constant internal ETH_TOKEN_ADDRESS = ERC20Interface(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
 
     event RefundStarted();
     event Withdraw(uint amountWei);
@@ -38,7 +39,7 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
 
     constructor(address _erc20Token, address _teamAddress, uint _initialTap, uint _capPercent, 
     uint _killAcceptancePercent, uint _tapAcceptancePercent, uint _tapIncrementFactor, address _pollDeployer, 
-    address _kyberNetwork, ConversionRatesInterface _ratesContract)
+    address _kyberNetwork, ConversionRatesInterface _ratesContract, address _daiAddress)
         public Treasury(_erc20Token, _teamAddress, _initialTap, _tapIncrementFactor, _pollDeployer) {
             //check for cap maybe
             // cap is 10^2 multiplied to actual percentage - already in poll
@@ -49,6 +50,7 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
             tapAcceptancePercent = _tapAcceptancePercent;
             tapIncrementFactor = _tapIncrementFactor;
             kyberNetwork = _kyberNetwork;
+            daiAddress = _daiAddress;
             conversionRatesContract = _ratesContract;
             tradeEnabled = true;
         }
@@ -102,15 +104,23 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
     function withdrawAmount(uint _amount) external onlyOwner onlyDuringGovernance {
         bool canKillApp =  canKill();
         require(!canKillApp, "cannot withdraw now");
-        require(_amount < address(this).balance, "Insufficient funds");
+        uint daiBalance = ERC20Interface(daiAddress).balanceOf(address(this));
+        uint daiRate;
+        (daiRate, ) = KyberNetworkProxy(kyberNetwork).getExpectedRate(ERC20Interface(daiAddress), 
+            ETH_TOKEN_ADDRESS, daiBalance);
+        uint daiValue = SafeMath.div(daiBalance, daiRate);
         splineHeightAtPivot = SafeMath.add(splineHeightAtPivot, SafeMath.mul(SafeMath.sub(now, 
                 pivotTime), currentTap));
+        
+        uint amountWithdrawable = _amount <= address(this).balance && _amount <= splineHeightAtPivot - 
+            withdrawnTillNow ? _amount : _amount <= address(this).balance + daiValue ? address(this).balance : 0;
+        require(amountWithdrawable > 0, "Insufficient funds");
         require(_amount <= splineHeightAtPivot - withdrawnTillNow, "Not allowed");
         pivotTime = now;
         splineHeightAtPivot = SafeMath.sub(splineHeightAtPivot, _amount);
-        withdrawnTillNow += _amount;    
-        teamAddress.transfer(_amount);
-        emit Withdraw(_amount);
+        withdrawnTillNow += amountWithdrawable;    
+        teamAddress.transfer(amountWithdrawable);
+        emit Withdraw(amountWithdrawable);
     }
 
     function isPollAddress(address _address) external view returns (bool) {
@@ -200,11 +210,8 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
         if (token == ETH_TOKEN_ADDRESS)
             return this.balance;
         else {
-            address wallet = tokenWallet[token];
-            uint balanceOfWallet = token.balanceOf(wallet);
-            uint allowanceOfWallet = token.allowance(wallet, this);
-
-            return (balanceOfWallet < allowanceOfWallet) ? balanceOfWallet : allowanceOfWallet;
+            address wallet = address(this);
+            return token.balanceOf(wallet);
         }
     }
 
@@ -222,34 +229,35 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
         return calcSrcQty(dstQty, srcDecimals, dstDecimals, rate);
     }
 
-    function getConversionRate(ERC20Interface src, ERC20Interface dest, uint srcQty, uint blockNumber) public view returns(uint) {
-        ERC20Interface token;
-        bool  isBuy;
+    function getConversionRate(ERC20Interface src, ERC20Interface dest, uint srcQty, uint blockNumber) 
+        public view returns(uint) {
+            ERC20Interface token;
+            bool  isBuy;
 
-        if (!tradeEnabled) return 0;
+            if (!tradeEnabled) return 0;
 
-        if (ETH_TOKEN_ADDRESS == src) {
-            isBuy = true;
-            token = dest;
-        } else if (ETH_TOKEN_ADDRESS == dest) {
-            isBuy = false;
-            token = src;
-        } else {
-            return 0; // pair is not listed
+            if (ETH_TOKEN_ADDRESS == src) {
+                isBuy = true;
+                token = dest;
+            } else if (ETH_TOKEN_ADDRESS == dest) {
+                isBuy = false;
+                token = src;
+            } else {
+                return 0; // pair is not listed
+            }
+
+            uint rate = conversionRatesContract.getRate(token, blockNumber, isBuy, srcQty);
+            uint destQty = getDestQty(src, dest, srcQty, rate);
+
+            if (getBalance(dest) < destQty) return 0;
+
+            if (sanityRatesContract != address(0)) {
+                uint sanityRate = sanityRatesContract.getSanityRate(src, dest);
+                if (rate > sanityRate) return 0;
+            }
+
+            return rate;
         }
-
-        uint rate = conversionRatesContract.getRate(token, blockNumber, isBuy, srcQty);
-        uint destQty = getDestQty(src, dest, srcQty, rate);
-
-        if (getBalance(dest) < destQty) return 0;
-
-        if (sanityRatesContract != address(0)) {
-            uint sanityRate = sanityRatesContract.getSanityRate(src, dest);
-            if (rate > sanityRate) return 0;
-        }
-
-        return rate;
-    }
 
     /// @dev do a trade
     /// @param srcToken Src token
@@ -302,17 +310,17 @@ contract PollFactory is Treasury, KyberReserveInterface, Withdrawable, Utils {
 
         // collect src tokens
         if (srcToken != ETH_TOKEN_ADDRESS) {
-            require(srcToken.transferFrom(msg.sender, tokenWallet[srcToken], srcAmount));
+            require(srcToken.transferFrom(msg.sender, address(this), srcAmount));
         }
 
         // send dest tokens
         if (destToken == ETH_TOKEN_ADDRESS) {
             destAddress.transfer(destAmount);
         } else {
-            require(destToken.transferFrom(tokenWallet[destToken], destAddress, destAmount));
+            require(destToken.transferFrom(address(this), destAddress, destAmount));
         }
 
-        TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
+        emit TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
 
         return true;
     }

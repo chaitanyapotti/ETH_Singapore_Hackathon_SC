@@ -28,8 +28,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "openzeppelin-solidity": "^2.0.0",
+    "bn.js": "^4.11.8",
     "electusvoting": "^2.4.2",
+    "moment": "^2.22.2",
+    "openzeppelin-solidity": "^2.0.0",
     "truffle-hdwallet-provider": "1.0.0-web3one.1"
   },
   "devDependencies": {
