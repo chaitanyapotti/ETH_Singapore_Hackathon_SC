@@ -8,7 +8,7 @@ const SanityRates = artifacts.require("./SanityRates.sol");
 const CrowdSale = artifacts.require("./CrowdSale.sol");
 const PollFactory = artifacts.require("./PollFactory.sol");
 const PollDeployer = artifacts.require("./PollDeployer.sol");
-const AutomatedReserve = artifacts.require("./KyberAutomatedReserve.sol");
+// const AutomatedReserve = artifacts.require("./KyberAutomatedReserve.sol");
 const FeeBurner = artifacts.require("./FeeBurner.sol");
 const WhiteList = artifacts.require("./WhiteList.sol");
 const ExpectedRate = artifacts.require("./ExpectedRate.sol");
@@ -59,7 +59,7 @@ module.exports = async (deployer, network, accounts) => {
     DaicoToken.address
   );
 
-  await deployer.deploy(AutomatedReserve, Network.address, LiquidityConversionRates.address, admin);
+  // await deployer.deploy(AutomatedReserve, Network.address, LiquidityConversionRates.address, admin);
   await deployer.deploy(FeeBurner, admin, KNC.address, Network.address);
   await deployer.deploy(WhiteList, admin, KGT.address);
   await deployer.deploy(ExpectedRate, Network.address, admin);

@@ -26,37 +26,32 @@ function tx(result, call) {
 }
 
 module.exports = async (deployer, network, accounts) => {
-  const admin = accounts[0];
-
-  const AutomatedReserveInstance = await AutomatedReserve.at(AutomatedReserve.address);
-  const MANAInstance = await Dai.at(Dai.address);
-
-  // Set the instances
-  const LiquidityConversionRatesInstance = await LiquidityConversionRates.at(LiquidityConversionRates.address);
-
-  // Set the automated reserve address
-  tx(await LiquidityConversionRatesInstance.setReserveAddress(AutomatedReserve.address), "setReserveAddress()");
-
-  // Transfer the required ETH/Token inventory to the automated reserve
-  const MANAAmount = new BN(tokenConfig.AutomatedReserve.MANA.Tokens).mul(new BN(10).pow(await MANAInstance.decimals())).toString();
-  tx(await MANAInstance.transfer(AutomatedReserve.address, MANAAmount), "transfer()");
-  tx(
-    await AutomatedReserveInstance.sendTransaction({ from: admin, value: web3.utils.toWei(new BN(tokenConfig.AutomatedReserve.MANA.Ether)) }),
-    "sendTransaction()"
-  );
-
-  // Set the liquidity parameters
-  tx(
-    await LiquidityConversionRatesInstance.setLiquidityParams(
-      tokenConfig.AutomatedReserve.MANA._rInFp,
-      tokenConfig.AutomatedReserve.MANA._pMinInFp,
-      tokenConfig.AutomatedReserve.MANA._numFpBits,
-      tokenConfig.AutomatedReserve.MANA._maxCapBuyInWei,
-      tokenConfig.AutomatedReserve.MANA._maxCapSellInWei,
-      tokenConfig.AutomatedReserve.MANA._feeInBps,
-      tokenConfig.AutomatedReserve.MANA._maxTokenToEthRateInPrecision,
-      tokenConfig.AutomatedReserve.MANA._minTokenToEthRateInPrecision
-    ),
-    "setLiquidityParams()"
-  );
+  // const admin = accounts[0];
+  // const AutomatedReserveInstance = await AutomatedReserve.at(AutomatedReserve.address);
+  // const MANAInstance = await Dai.at(Dai.address);
+  // // Set the instances
+  // const LiquidityConversionRatesInstance = await LiquidityConversionRates.at(LiquidityConversionRates.address);
+  // // Set the automated reserve address
+  // tx(await LiquidityConversionRatesInstance.setReserveAddress(AutomatedReserve.address), "setReserveAddress()");
+  // // Transfer the required ETH/Token inventory to the automated reserve
+  // const MANAAmount = new BN(tokenConfig.AutomatedReserve.MANA.Tokens).mul(new BN(10).pow(await MANAInstance.decimals())).toString();
+  // tx(await MANAInstance.transfer(AutomatedReserve.address, MANAAmount), "transfer()");
+  // tx(
+  //   await AutomatedReserveInstance.sendTransaction({ from: admin, value: web3.utils.toWei(new BN(tokenConfig.AutomatedReserve.MANA.Ether)) }),
+  //   "sendTransaction()"
+  // );
+  // // Set the liquidity parameters
+  // tx(
+  //   await LiquidityConversionRatesInstance.setLiquidityParams(
+  //     tokenConfig.AutomatedReserve.MANA._rInFp,
+  //     tokenConfig.AutomatedReserve.MANA._pMinInFp,
+  //     tokenConfig.AutomatedReserve.MANA._numFpBits,
+  //     tokenConfig.AutomatedReserve.MANA._maxCapBuyInWei,
+  //     tokenConfig.AutomatedReserve.MANA._maxCapSellInWei,
+  //     tokenConfig.AutomatedReserve.MANA._feeInBps,
+  //     tokenConfig.AutomatedReserve.MANA._maxTokenToEthRateInPrecision,
+  //     tokenConfig.AutomatedReserve.MANA._minTokenToEthRateInPrecision
+  //   ),
+  //   "setLiquidityParams()"
+  // );
 };
