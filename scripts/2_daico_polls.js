@@ -31,6 +31,8 @@ module.exports = async callback => {
     const killAddress = await pollFactory.killPollAddress();
     console.log("Kill Poll Address: ", killAddress);
 
+    await increaseTime(10000, web3);
+
     // Vote in Tap Poll
     const tapPollInstance = await IPoll.at(tapAddress);
     await tapPollInstance.vote(0, { from: accounts[2] });
